@@ -1,5 +1,6 @@
 # This should mirror the build dependencies in pyproject.toml
 
+maturin>=1.8
 ninja
 packaging>=24.2
 setuptools>=77.0.3,<81.0.0

@@ -1,0 +1,83 @@
+# justfile for LMCache Rust S3 Connector development
+
+# build the Rust extension in release mode
+build:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    uv tool run maturin develop --release
+
+# build in debug mode (faster compilation)
+build-debug:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    uv tool run maturin develop
+
+# run clippy linter
+lint:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    cargo clippy
+
+# run Rust unit tests
+test-rust:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    cargo test
+
+# verify the module can be imported
+test-import:
+    cd /Users/weaton/git/LMCache && \
+    uv run --no-project python -c "import lmcache_s3; print('✓ lmcache_s3 module imported successfully')"
+
+# run basic binding tests
+test-bindings:
+    cd /Users/weaton/git/LMCache && \
+    uv run --no-project python test_rust_s3_bindings.py
+
+# run integration tests with MinIO (full LMCache)
+test-integration:
+    cd /Users/weaton/git/LMCache && \
+    .venv/bin/python test_rust_s3_integration.py
+
+# run minimal integration tests with MinIO (no LMCache dependencies)
+test-minimal:
+    cd /Users/weaton/git/LMCache && \
+    .venv/bin/python test_rust_s3_minimal.py
+
+# run benchmark comparing Rust vs Python connectors
+benchmark:
+    cd /Users/weaton/git/LMCache && \
+    .venv/bin/python test_rust_s3_benchmark.py
+
+# start MinIO for local S3 testing
+minio-start:
+    docker run -d --name lmcache-minio \
+        -p 9000:9000 -p 9001:9001 \
+        -e "MINIO_ROOT_USER=minioadmin" \
+        -e "MINIO_ROOT_PASSWORD=minioadmin" \
+        quay.io/minio/minio server /data --console-address ":9001"
+
+# stop MinIO container
+minio-stop:
+    docker stop lmcache-minio && docker rm lmcache-minio
+
+# check MinIO status
+minio-status:
+    docker ps | grep minio || echo "MinIO not running"
+
+# create a test bucket in MinIO (requires aws-cli or mc)
+minio-create-bucket BUCKET="test-bucket":
+    docker exec lmcache-minio mc alias set local http://localhost:9000 minioadmin minioadmin && \
+    docker exec lmcache-minio mc mb local/{{BUCKET}} || echo "Bucket may already exist"
+
+# clean all build artifacts
+clean:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    cargo clean
+
+# format Rust code
+fmt:
+    cd /Users/weaton/git/LMCache/rust/lmcache_s3 && \
+    cargo fmt
+
+# run all quality checks
+check: lint test-rust test-import
+
+# full rebuild and test cycle
+rebuild: clean build test-import

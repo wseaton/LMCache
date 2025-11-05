@@ -8,8 +8,11 @@
 # Thus, we will still lock a torch version here because we can choose to release wheels
 # in sync with vllm and update our torch version accordingly
 requires = [
+    "maturin>=1.8",
+    "nanobind>=2.0.0",
     "ninja",
     "packaging>=24.2",
+    "scikit-build-core>=0.10.0",
     "setuptools>=77.0.3,<81.0.0",
     "setuptools_scm>=8",
     "torch==2.8.0",
@@ -20,8 +23,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lmcache"
 authors = [{name = "LMCache Team", email = "lmcacheteam@gmail.com"}]
-license = "Apache-2.0"
-license-files = ["LICENSE"]
+license = {text = "Apache-2.0"}
 readme = "README.md"
 description = "A LLM serving engine extension to reduce TTFT and increase throughput, especially under long-context scenarios."
 classifiers = [
@@ -167,3 +169,10 @@ auditwheel repair \
   --exclude libcudart.so.12 \
   -w {dest_dir} {wheel}
 """
+
+[tool.maturin]
+# configuration for building the Rust S3 connector extension
+module-name = "lmcache_s3"
+python-source = "."
+manifest-path = "rust/lmcache_s3/Cargo.toml"
+

@@ -121,5 +121,8 @@ lmcache/experimental/tests
 /csrc/*_hip.cuh
 /csrc/*_hip.cpp
 
+
+
+target/
 # Ignore all log files
 *.log
